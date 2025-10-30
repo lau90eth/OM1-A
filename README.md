@@ -154,6 +154,7 @@ docker-compose up om1_avatar -d --no-build
 More detailed documentation can be accessed at [docs.openmind.org](https://docs.openmind.org/).
 
 ## Contributing
+**📚 Detailed guidelines: [CONTRIBUTING.md](CONTRIBUTING.md)**
 
 Please make sure to read the [Contributing Guide](./CONTRIBUTING.md) before making a pull request.
 

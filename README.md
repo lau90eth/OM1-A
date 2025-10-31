@@ -100,7 +100,12 @@ We're excited to introduce **full autonomy mode**, where three services work tog
 - **om1**
 - **unitree_go2_ros2_sdk** – A ROS 2 package that provides SLAM (Simultaneous Localization and Mapping) capabilities for the Unitree Go2 robot using an RPLiDAR sensor, the SLAM Toolbox and the Nav2 stack.
 - **om1-avatar** – A modern React-based frontend application that provides the user interface and avatar display system for OM1 robotics software.
+## 🚀 OM1-avatar Setup (Quick Start)
 
+1. **Clone the repo**:
+   ```bash
+   git clone https://github.com/OpenMind/OM1-avatar.git
+   cd OM1-avatar
 ## Intro to Backpack?
 From research to real-world autonomy, a platform that learns, moves, and builds with you.
 We'll shortly be releasing the **BOM** and details on **DIY** for it. 

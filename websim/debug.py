@@ -1,6 +1,5 @@
 import logging
 
-# Enable debug logs for WebSim
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 

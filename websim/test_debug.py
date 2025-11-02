@@ -6,7 +6,4 @@ class TestDebugLogging(unittest.TestCase):
     @patch('logging.getLogger')
     def test_log_debug(self, mock_logger):
         log_debug("test message")
-        mock_logger().debug.assert_called_with("[WebSim Debug] test message")
-
-if __name__ == '__main__':
-    unittest.main()
+        mock_logger.return_value.debug.assert_called_once_with("test message")

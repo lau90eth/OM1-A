@@ -476,27 +476,30 @@ class CortexRuntime:
         -------
         None
         """
-        if self._is_reloading:
-            logging.debug("Skipping tick during config reload")
-            return
+        try:
+            if self._is_reloading:
+                logging.debug("Skipping tick during config reload")
+                return
 
-        # collect all the latest inputs
-        finished_promises, _ = await self.action_orchestrator.flush_promises()
+            # collect all the latest inputs
+            finished_promises, _ = await self.action_orchestrator.flush_promises()
 
-        # combine those inputs into a suitable prompt
-        prompt = self.fuser.fuse(self.config.agent_inputs, finished_promises)
-        if prompt is None:
-            logging.debug("No prompt to fuse")
-            return
+            # combine those inputs into a suitable prompt
+            prompt = self.fuser.fuse(self.config.agent_inputs, finished_promises)
+            if prompt is None:
+                logging.debug("No prompt to fuse")
+                return
 
-        # if there is a prompt, send to the AIs
-        output = await self.config.cortex_llm.ask(prompt)
-        if output is None:
-            logging.debug("No output from LLM")
-            return
+            # if there is a prompt, send to the AIs
+            output = await self.config.cortex_llm.ask(prompt)
+            if output is None:
+                logging.debug("No output from LLM")
+                return
 
-        # Trigger the simulators
-        await self.simulator_orchestrator.promise(output.actions)
+            # Trigger the simulators
+            await self.simulator_orchestrator.promise(output.actions)
 
-        # Trigger the actions
-        await self.action_orchestrator.promise(output.actions)
+            # Trigger the actions
+            await self.action_orchestrator.promise(output.actions)
+        except Exception as error:
+            logging.error(f"Error in cortex tick: {error}")

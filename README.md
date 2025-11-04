@@ -1,3 +1,4 @@
+![Upstream Sync](https://img.shields.io/github/fork-sync/lau90eth/OM1-A?label=upstream%20sync&upstream=OpenMind/OM1)
 ![OM_Banner_X2 (1)](https://github.com/user-attachments/assets/853153b7-351a-433d-9e1a-d257b781f93c)
 
 <p align="center">  

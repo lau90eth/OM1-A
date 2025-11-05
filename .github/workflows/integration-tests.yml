@@ -1,4 +1,4 @@
-name: Run Integration Tests
+       uv run pytest -m "integration" -k "not ubtech" --log-cli-level=DEBUG --junitxml=test-reports/results.xml -s -v
 
 on:
   push:

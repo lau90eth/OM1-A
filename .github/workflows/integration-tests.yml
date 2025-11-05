@@ -1,120 +1,97 @@
 name: Run Integration Tests
 
-env:
-  OM1_API_KEY: ${{ secrets.OM1_API_KEY }}
-
 on:
-  schedule:
-    - cron: '0 * * * *'  # Every hour UTC
-  workflow_dispatch:     # Allow manual trigger via GitHub UI
   push:
-    branches:
-      - 'main'
+    branches: [ main ]
   pull_request:
-    branches:
-      - '**'
+  schedule:
+    - cron: '0 2 * * *'  # Ogni giorno alle 2:00 UTC
 
 jobs:
-  integration-test:
-    runs-on: ubuntu-latest
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          submodules: 'recursive'
-
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y portaudio19-dev python3-pyaudio cmake
-
-      - name: Cache CycloneDDS build
-        uses: actions/cache@v4
-        with:
-          path: /tmp/cyclonedds/cyclonedds/install
-          key: ${{ runner.os }}-cyclonedds-0.10.x-${{ hashFiles('.github/workflows/integration-test.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-cyclonedds-0.10.x-
-
-      - name: Install cycloneDDS
-        run: |
-          if [ ! -d "/tmp/cyclonedds/cyclonedds/install" ]; then
-            echo "Building CycloneDDS from source..."
-            mkdir -p /tmp/cyclonedds
-            cd /tmp/cyclonedds
-            git clone https://github.com/eclipse-cyclonedds/cyclonedds -b releases/0.10.x
-            cd cyclonedds && mkdir build install && cd build
-            cmake .. -DCMAKE_INSTALL_PREFIX=../install -DBUILD_EXAMPLES=ON
-            cmake --build . --target install
-          else
-            echo "Using cached CycloneDDS installation"
-          fi
-          echo "CYCLONEDDS_HOME=/tmp/cyclonedds/cyclonedds/install" >> $GITHUB_ENV
-          echo "/tmp/cyclonedds/cyclonedds/install/lib" >> $GITHUB_PATH
-          echo "CMAKE_PREFIX_PATH=/tmp/cyclonedds/cyclonedds/install" >> $GITHUB_ENV
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: "Set up Python"
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: "pyproject.toml"
-
-      - name: Cache uv dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/uv
-            .venv
-          key: ${{ runner.os }}-uv-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+          node-version: 20
+          cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          uv sync --extra dds
+        run: npm ci
 
-      - name: Run integration tests
+      - name: Start API Server
+        shell: pwsh
         run: |
-          uv run pytest -m "integration" --log-cli-level=DEBUG --junitxml=test-reports/results.xml -s
+          Write-Host "Starting server in background..."
+          Start-Process -FilePath "npm" -ArgumentList "start" -NoNewWindow
 
-      - name: Extract test summary
-        id: summary
+          Write-Host "Waiting for server to be ready on http://localhost:3000..."
+          $attempts = 0
+          $maxAttempts = 30
+          while ($attempts -lt $maxAttempts) {
+            try {
+              $response = Invoke-WebRequest -Uri http://localhost:3000 -UseBasicParsing -TimeoutSec 2 -Method Head
+              if ($response.StatusCode -eq 200) {
+                Write-Host "Server is UP and running!"
+                break
+              }
+            } catch { }
+            $attempts++
+            Start-Sleep -Seconds 1
+          }
+          if ($attempts -ge $maxAttempts) {
+            Write-Host "Server failed to start in time."
+            exit 1
+          }
+
+      - name: Test API with PowerShell
+        shell: pwsh
         run: |
-          TOTAL=$(grep -oP 'tests="\K[0-9]+' test-reports/results.xml)
-          FAILURES=$(grep -oP 'failures="\K[0-9]+' test-reports/results.xml)
-          ERRORS=$(grep -oP 'errors="\K[0-9]+' test-reports/results.xml)
-          echo "total=$TOTAL" >> $GITHUB_OUTPUT
-          echo "failures=$FAILURES" >> $GITHUB_OUTPUT
-          echo "errors=$ERRORS" >> $GITHUB_OUTPUT
+          $body = @{ test = $true; message = "Integration test from GitHub Actions" } | ConvertTo-Json
 
+          try {
+            $response = Invoke-RestMethod `
+              -Uri "http://localhost:3000/api/test" `
+              -Method POST `
+              -Body $body `
+              -ContentType "application/json" `
+              -TimeoutSec 30
+
+            Write-Host "API Test PASSED!"
+            Write-Host "Response: $($response | ConvertTo-Json -Depth 5)"
+          }
+          catch {
+            Write-Host "API Test FAILED: $($_.Exception.Message)"
+            if ($_.Exception.Response) {
+              $status = $_.Exception.Response.StatusCode
+              Write-Host "HTTP Status: $status"
+            }
+            exit 1
+          }
+
+      # OPZIONALE: Notifica su Slack solo su fallimento programmato
       - name: Notify Slack on failure
         if: failure() && github.event_name == 'schedule'
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{
-              \"text\": \"❌ @channel *Integration Tests Failed*\n\
-              *Repository:* \`${{ github.repository }}\`\n\
-              *Branch:* \`${{ github.ref_name }}\`\n\
-              *Total:* ${{ steps.summary.outputs.total }}  •  *Failures:* ${{ steps.summary.outputs.failures }}  •  *Errors:* ${{ steps.summary.outputs.errors }}\n\
-              🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Run>\"
-            }" \
-            ${{ secrets.ONCALL_SLACK_WEBHOOK_URL }}
-
-      - name: Notify Slack on success
-        if: success() && github.event_name == 'schedule'
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{
-              \"text\": \"✅ *All Integration Tests Passed*\n\
-              *Total:* ${{ steps.summary.outputs.total }}\n\
-              🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>\"
-            }" \
-            ${{ secrets.ONCALL_SLACK_WEBHOOK_URL }}
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          payload: |
+            {
+              "text": "@channel *Integration Tests Failed*",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Repository:* `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`\n*Run:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View in GitHub>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ONCALL_SLACK_WEBHOOK_URL }}

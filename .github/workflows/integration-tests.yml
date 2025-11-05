@@ -21,6 +21,11 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Install system dependencies for pyaudio
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y portaudio19-dev python3-pyaudio
+
       - name: Install uv
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -33,7 +38,12 @@ jobs:
         run: |
           source .venv/bin/activate
           uv pip install -r requirements.txt || uv pip install -e . || true
-          uv pip install pytest pytest-asyncio pytest-anyio
+          uv pip install pytest pytest-asyncio pytest-anyio ruff
+
+      - name: Fix imports with Ruff
+        run: |
+          source .venv/bin/activate
+          uv run ruff check . --fix
 
       - name: Run integration tests
         env:

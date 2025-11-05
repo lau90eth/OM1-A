@@ -56,7 +56,7 @@ jobs:
         run: |
           source .venv/bin/activate
           mkdir -p test-reports
-          uv run pytest -m "integration" --log-cli-level=DEBUG --junitxml=test-reports/results.xml -s -v
+          uv run pytest -k "not ubtech" -v --tb=short .
 
       - name: Upload test results
         if: always()

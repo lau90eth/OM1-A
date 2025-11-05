@@ -45,10 +45,7 @@ jobs:
           source .venv/bin/activate
           uv pip install git+https://github.com/OpenMind/ubtech-python-sdk.git || true
 
-      - name: Fix imports with Ruff
-        run: |
-          source .venv/bin/activate
-          uv run ruff check . --fix
+     
 
       - name: Run integration tests
         env:

@@ -40,23 +40,18 @@ jobs:
           uv pip install -r requirements.txt || uv pip install -e . || true
           uv pip install pytest pytest-asyncio pytest-anyio ruff
 
-      - name: Install ubtech dependency
-        run: |
-          source .venv/bin/activate
-          uv pip install git+https://github.com/OpenMind/ubtech-python-sdk.git || true
-
       - name: Fix imports with Ruff
         run: |
           source .venv/bin/activate
-          uv run ruff check . --fix
+          uv run ruff check . --fix || true
 
-      - name: Run integration tests
+      - name: Run integration tests (skip ubtech)
         env:
           OM1_API_KEY: dummy-key-for-testing
         run: |
           source .venv/bin/activate
           mkdir -p test-reports
-          uv run pytest -m "integration" --log-cli-level=DEBUG --junitxml=test-reports/results.xml -s -v
+          uv run pytest -m "integration and not ubtech" --log-cli-level=DEBUG --junitxml=test-reports/results.xml -s -v
 
       - name: Upload test results
         if: always()

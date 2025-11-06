@@ -1,10 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 from pycdr2 import IdlStruct
 from pycdr2.types import int8
 
-from .std_msgs import Header, String
+from .std_msgs import Header
 
 
 @dataclass
@@ -22,92 +22,35 @@ class AudioStatus(IdlStruct, typename="AudioStatus"):
         UNKNOWN = 3
 
     header: Header
-    status_mic: int8
-    status_speaker: int8
-    sentence_to_speak: String
-
-
-@dataclass
-class CameraStatus(IdlStruct, typename="CameraStatus"):
-    class STATUS(Enum):
-        DISABLED = 0
-        ENABLED = 1
-
-    header: Header
-    status: int8
-
+    mic_status: int8 = 0
+    speaker_status: int8 = 0
+    mode: str = field(default_factory=lambda: "unknown")
 
 @dataclass
 class AIStatusRequest(IdlStruct, typename="AIStatusRequest"):
-    class Code(Enum):
-        DISABLED = 0
-        ENABLED = 1
-        STATUS = 2
-
     header: Header
-    request_id: String
-    code: int8
-
+    request_type: str = field(default_factory=lambda: "status")
 
 @dataclass
 class AIStatusResponse(IdlStruct, typename="AIStatusResponse"):
-    class Code(Enum):
-        DISABLED = 0
-        ENABLED = 1
-        UNKNOWN = 2
-
     header: Header
-    request_id: String
-    code: int8
-    status: String
+    status: str = field(default_factory=lambda: "ok")
+    message: str = field(default_factory=lambda: "")
 
+@dataclass
+class CameraStatus(IdlStruct, typename="CameraStatus"):
+    header: Header
+    fps: float = 0.0
+    resolution: str = field(default_factory=lambda: "unknown")
+    status: str = field(default_factory=lambda: "unknown")
 
 @dataclass
 class ModeStatusRequest(IdlStruct, typename="ModeStatusRequest"):
-    class Code(Enum):
-        SWITCH_MODE = 0
-        STATUS = 1
-
     header: Header
-    request_id: String
-    code: int8
-    mode: String = String("")  # Target mode for SWITCH_MODE, ignored for STATUS
-
+    mode: str = field(default_factory=lambda: "unknown")
 
 @dataclass
 class ModeStatusResponse(IdlStruct, typename="ModeStatusResponse"):
-    class Code(Enum):
-        SUCCESS = 0
-        FAILURE = 1
-        UNKNOWN = 2
-
     header: Header
-    request_id: String
-    code: int8
-    current_mode: String
-    message: String
-
-
-@dataclass
-class TTSStatusRequest(IdlStruct, typename="TTSStatusRequest"):
-    class Code(Enum):
-        DISABLED = 0
-        ENABLED = 1
-        STATUS = 2
-
-    header: Header
-    request_id: String
-    code: int8
-
-
-@dataclass
-class TTSStatusResponse(IdlStruct, typename="TTSStatusResponse"):
-    class Code(Enum):
-        DISABLED = 0
-        ENABLED = 1
-        UNKNOWN = 2
-
-    header: Header
-    request_id: String
-    code: int8
-    status: String
+    current_mode: str = field(default_factory=lambda: "unknown")
+    status: str = field(default_factory=lambda: "ok")

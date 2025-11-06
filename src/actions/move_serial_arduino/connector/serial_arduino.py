@@ -12,20 +12,16 @@ This only works if you actually have a serial port connected to your computer, s
 
 
 class MoveSerialConnector(ActionConnector[MoveInput]):
-
     def __init__(self, config: ActionConfig):
         super().__init__(config)
 
         # Open the serial port
-        self.port = (
-            ""  # specify your serial port here, such as COM1 or /dev/cu.usbmodem14101
-        )
+        self.port = ""  # specify your serial port here, such as COM1 or /dev/cu.usbmodem14101
         self.ser = None
         if self.port:
             self.ser = serial.Serial(self.port, 9600)
 
     async def connect(self, output_interface: MoveInput) -> None:
-
         new_msg = {"move": ""}
 
         if output_interface.action == "be still":

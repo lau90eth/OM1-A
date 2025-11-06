@@ -123,9 +123,7 @@ class TurtleBot4CameraVideoStream(VideoStream):
                     image = self.image
 
                 if image is not None:
-                    resized_image = cv2.resize(
-                        image, self.resolution, interpolation=cv2.INTER_AREA
-                    )
+                    resized_image = cv2.resize(image, self.resolution, interpolation=cv2.INTER_AREA)
                     _, buffer = cv2.imencode(".jpg", resized_image, self.encode_quality)
                     frame_data = base64.b64encode(buffer.tobytes()).decode("utf-8")
 
@@ -231,9 +229,7 @@ class TurtleBot4CameraVLMProvider:
 
         if self.stream_ws_client:
             self.stream_ws_client.start()
-            self.video_stream.register_frame_callback(
-                self.stream_ws_client.send_message
-            )
+            self.video_stream.register_frame_callback(self.stream_ws_client.send_message)
 
         logging.info("TurtleBot4 Camera VLM provider started")
 

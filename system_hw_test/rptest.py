@@ -24,18 +24,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--serial", help="serial port to use, when using the low level driver", type=str
 )
-parser.add_argument(
-    "--zenoh", help="use zenoh to connect to the robot", action="store_true"
-)
-parser.add_argument(
-    "--multicast", help="multicast address for zenoh", type=str, default=None
-)
-parser.add_argument(
-    "--URID", help="your robot's URID, when using Zenoh", type=str, default=""
-)
-parser.add_argument(
-    "--type", help="the type of the robot (go2 or tb4)", type=str, default="go2"
-)
+parser.add_argument("--zenoh", help="use zenoh to connect to the robot", action="store_true")
+parser.add_argument("--multicast", help="multicast address for zenoh", type=str, default=None)
+parser.add_argument("--URID", help="your robot's URID, when using Zenoh", type=str, default="")
+parser.add_argument("--type", help="the type of the robot (go2 or tb4)", type=str, default="go2")
 print(parser.format_help())
 
 args = parser.parse_args()
@@ -60,9 +52,7 @@ def create_straight_line_path_from_angle(angle_degrees, length=1.0, num_points=1
 path_angles = [-60, -45, -30, -15, 0, 15, 30, 45, 60, 180]  # degrees
 path_length = 1.05  # meters
 
-paths = [
-    create_straight_line_path_from_angle(angle, path_length) for angle in path_angles
-]
+paths = [create_straight_line_path_from_angle(angle, path_length) for angle in path_angles]
 
 print(f"Created {len(paths)} paths with angles: {path_angles}")
 print(f"Each path extends {path_length}m from robot center")
@@ -167,11 +157,7 @@ for b in angles_blanked:
 
 
 def continuous_serial(lidar):
-
-    for i, scan in enumerate(
-        lidar.iter_scans(scan_type="express", max_buf_meas=3000, min_len=5)
-    ):
-
+    for i, scan in enumerate(lidar.iter_scans(scan_type="express", max_buf_meas=3000, min_len=5)):
         array = np.array(scan)
 
         # the driver sends angles in degrees between from 0 to 360
@@ -190,7 +176,6 @@ def continuous_serial(lidar):
 
 
 def zenoh_scan(sample):
-
     scan = sensor_msgs.LaserScan.deserialize(sample.payload.to_bytes())
     # print(f"Scan {scan}")
 
@@ -243,11 +228,9 @@ def calculate_angle_and_distance(world_x, world_y):
 
 
 def process(data):
-
     complexes = []
 
     for angle, distance in data:
-
         d_m = distance
 
         # don't worry about distant objects
@@ -354,9 +337,7 @@ def process(data):
                     continue
 
             # Calculate distance from obstacle to the line segment
-            dist_to_line = distance_point_to_line_segment(
-                x, y, start_x, start_y, end_x, end_y
-            )
+            dist_to_line = distance_point_to_line_segment(x, y, start_x, start_y, end_x, end_y)
 
             if dist_to_line < half_width_robot:
                 # too close - this path will not work
@@ -405,25 +386,19 @@ def process(data):
     if len(ppl) > 0:
         print(f"There are {len(ppl)} possible paths.")
         if len(left) > 0:
-            print(
-                f"You can turn left using paths: {left} ({[path_angles[p] for p in left]}°)."
-            )
+            print(f"You can turn left using paths: {left} ({[path_angles[p] for p in left]}°).")
         if len(forward) > 0:
             print(
                 f"You can go forward using paths: {forward} ({[path_angles[p] for p in forward]}°)."
             )
         if len(right) > 0:
-            print(
-                f"You can turn right using paths: {right} ({[path_angles[p] for p in right]}°)."
-            )
+            print(f"You can turn right using paths: {right} ({[path_angles[p] for p in right]}°).")
         if len(backward) > 0:
             print(
                 f"You can go backward using paths: {backward} ({[path_angles[p] for p in backward]}°)."
             )
     else:
-        print(
-            "You are surrounded by objects and cannot safely move in any direction. DO NOT MOVE."
-        )
+        print("You are surrounded by objects and cannot safely move in any direction. DO NOT MOVE.")
 
     for p in bad_paths:
         # these are all the bad paths
@@ -432,7 +407,6 @@ def process(data):
 
 
 if __name__ == "__main__":
-
     if args.serial:
         PORT_NAME = args.serial
         print(f"Using {PORT_NAME} as the serial port")
@@ -471,9 +445,7 @@ if __name__ == "__main__":
         print("[INFO] Opening zenoh session...")
         conf = zenoh.Config()
         if args.multicast:
-            conf.insert_json5(
-                "scouting", f'{{"multicast": {{"address": "{args.multicast}"}}}}'
-            )
+            conf.insert_json5("scouting", f'{{"multicast": {{"address": "{args.multicast}"}}}}')
 
         z = open_zenoh_session()
 

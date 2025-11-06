@@ -139,9 +139,7 @@ def handleCrsfPacket(ptype, data):
         hdg = int.from_bytes(data[13:15], byteorder="big", signed=True) / 100.0
         alt = int.from_bytes(data[15:17], byteorder="big", signed=True) - 1000
         sats = data[17]
-        print(
-            f"GPS: Pos={lat} {lon} GSpd={gspd:0.1f}m/s Hdg={hdg:0.1f} Alt={alt}m Sats={sats}"
-        )
+        print(f"GPS: Pos={lat} {lon} GSpd={gspd:0.1f}m/s Hdg={hdg:0.1f} Alt={alt}m Sats={sats}")
     elif ptype == PacketsTypes.VARIO:
         vspd = int.from_bytes(data[3:5], byteorder="big", signed=True) / 10.0
         print(f"VSpd: {vspd:0.1f}m/s")
@@ -187,9 +185,7 @@ def handleCrsfPacket(ptype, data):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "-P", "--port", default="/dev/cu.usbserial-B003ABY3", required=False
-)
+parser.add_argument("-P", "--port", default="/dev/cu.usbserial-B003ABY3", required=False)
 parser.add_argument("-b", "--baud", default=420000, required=False)
 parser.add_argument(
     "-t",

@@ -151,9 +151,7 @@ class RPDriver(object):
                 timeout=self.timeout,
             )
         except serial.SerialException as err:
-            raise RPLidarException(
-                "Failed to connect to the sensor " "due to: %s" % err
-            )
+            raise RPLidarException("Failed to connect to the sensor due to: %s" % err)
 
     def disconnect(self):
         """Disconnects from the serial port"""
@@ -278,7 +276,7 @@ class RPDriver(object):
             The related error code that caused a warning/error.
         """
         if self._serial.inWaiting() > 0:
-            return "Data in buffer. " "Run clean_input() to empty the buffer."
+            return "Data in buffer. Run clean_input() to empty the buffer."
         self.logger.info("Asking for health")
         self._send_cmd(GET_HEALTH_BYTE)
         dsize, is_single, dtype = self._read_descriptor()
@@ -324,19 +322,13 @@ class RPDriver(object):
         status, error_code = self.get_health()
         self.logger.debug("Health status: %s [%d]", status, error_code)
         if status == _HEALTH_STATUSES[2]:
-            self.logger.warning(
-                "Trying to reset sensor due to error. " "Error code: %d", error_code
-            )
+            self.logger.warning("Trying to reset sensor due to error. Error code: %d", error_code)
             self.reset()
             status, error_code = self.get_health()
             if status == _HEALTH_STATUSES[2]:
-                raise RPLidarException(
-                    "RPLidar hardware failure. " "Error code: %d" % error_code
-                )
+                raise RPLidarException("RPLidar hardware failure. Error code: %d" % error_code)
         elif status == _HEALTH_STATUSES[1]:
-            self.logger.warning(
-                "Warning sensor status detected! " "Error code: %d", error_code
-            )
+            self.logger.warning("Warning sensor status detected! Error code: %d", error_code)
 
         cmd = _SCAN_TYPE[scan_type]["byte"]
         print("Starting scan in %s mode" % scan_type)
@@ -397,8 +389,7 @@ class RPDriver(object):
                 data_in_buf = self._serial.inWaiting()
                 if data_in_buf > max_buf_meas:
                     self.logger.warning(
-                        "Too many bytes in the input buffer: %d/%d. "
-                        "Cleaning buffer...",
+                        "Too many bytes in the input buffer: %d/%d. Cleaning buffer...",
                         data_in_buf,
                         max_buf_meas,
                     )
@@ -417,18 +408,14 @@ class RPDriver(object):
                     # if not self.express_data or type(self.express_data) == bool:
                     if not self.express_data:
                         self.logger.debug("reading first time bytes")
-                        self.express_data = ExpressPacket.from_string(
-                            self._read_response(dsize)
-                        )
+                        self.express_data = ExpressPacket.from_string(self._read_response(dsize))
 
                     self.express_old_data = self.express_data
                     self.logger.debug(
                         "set old_data with start_angle %f",
                         self.express_old_data.start_angle,
                     )
-                    self.express_data = ExpressPacket.from_string(
-                        self._read_response(dsize)
-                    )
+                    self.express_data = ExpressPacket.from_string(self._read_response(dsize))
                     self.logger.debug(
                         "set new_data with start_angle %f",
                         self.express_data.start_angle,
@@ -436,7 +423,7 @@ class RPDriver(object):
 
                 self.express_trame += 1
                 self.logger.debug(
-                    "process scan of frame %d with angle : " "%f and angle new : %f",
+                    "process scan of frame %d with angle : %f and angle new : %f",
                     self.express_trame,
                     self.express_old_data.start_angle,
                     self.express_data.start_angle,
@@ -478,9 +465,7 @@ class RPDriver(object):
                 scan_list.append((quality, angle, distance))
 
 
-class ExpressPacket(
-    namedtuple("express_packet", "distance angle new_scan start_angle")
-):
+class ExpressPacket(namedtuple("express_packet", "distance angle new_scan start_angle")):
     sync1 = 0xA
     sync2 = 0x5
     sign = {0: 1, 1: -1}

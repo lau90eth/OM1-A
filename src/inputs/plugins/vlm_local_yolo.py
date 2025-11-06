@@ -59,9 +59,7 @@ def set_best_resolution(cap, resolutions):
             return width, height
 
     logging.info("⚠️ Could not set preferred resolution. Using default.")
-    return int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(
-        cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    )
+    return int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 
 # if working on Mac, please disable continuity camera on your iphone
@@ -132,9 +130,7 @@ class VLM_Local_YOLO(FuserInput[str]):
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
             self.cam_third = int(self.width / 3)
-            logging.info(
-                f"Webcam pixel dimensions for YOLO: {self.width}, {self.height}"
-            )
+            logging.info(f"Webcam pixel dimensions for YOLO: {self.width}, {self.height}")
 
         self.odom = OdomProvider()
         logging.info(f"YOLO Odom Provider: {self.odom}")
@@ -180,7 +176,6 @@ class VLM_Local_YOLO(FuserInput[str]):
         await asyncio.sleep(0.25)
 
         if self.have_cam and self.cap is not None:
-
             ret, frame = self.cap.read()
             self.frame_index += 1
             timestamp = time.time()
@@ -198,9 +193,7 @@ class VLM_Local_YOLO(FuserInput[str]):
             except Exception as e:
                 logging.error(f"Error parsing Odom: {e}")
 
-            results = self.model.predict(
-                source=frame, save=False, stream=True, verbose=False
-            )
+            results = self.model.predict(source=frame, save=False, stream=True, verbose=False)
 
             detections = []
             for r in results:
@@ -218,9 +211,7 @@ class VLM_Local_YOLO(FuserInput[str]):
                             }
                         )
 
-            logging.debug(
-                f"\nFrame {self.frame_index} @ {timestamp} — {len(detections)} objects:"
-            )
+            logging.debug(f"\nFrame {self.frame_index} @ {timestamp} — {len(detections)} objects:")
 
             if self.write_to_local_file:
                 try:
@@ -286,11 +277,8 @@ class VLM_Local_YOLO(FuserInput[str]):
         detections = raw_input
 
         if detections:
-
             for det in detections:
-                logging.debug(
-                    f"{det['class']} ({det['confidence']:.2f}) -> {det['bbox']}"
-                )
+                logging.debug(f"{det['class']} ({det['confidence']:.2f}) -> {det['bbox']}")
 
             sentence = None
 
@@ -342,10 +330,7 @@ class VLM_Local_YOLO(FuserInput[str]):
 
         logging.info(f"VLM_YOLO_Local: {latest_message.message}")
 
-        result = (
-            f"\nINPUT: {self.descriptor_for_LLM}\n// START\n"
-            f"{latest_message.message}\n// END\n"
-        )
+        result = f"\nINPUT: {self.descriptor_for_LLM}\n// START\n{latest_message.message}\n// END\n"
 
         self.io_provider.add_input(
             self.descriptor_for_LLM, latest_message.message, latest_message.timestamp

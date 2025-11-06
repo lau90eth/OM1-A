@@ -43,15 +43,11 @@ class UnitreeGo2LocationProvider:
         if not os.path.exists(self.locations_folder_path):
             os.makedirs(self.locations_folder_path, exist_ok=True, mode=0o755)
 
-        self.locations_file = os.path.join(
-            self.locations_folder_path, locations_file_name
-        )
+        self.locations_file = os.path.join(self.locations_folder_path, locations_file_name)
 
         self.locations: Dict[str, Dict] = self._load_locations()
         if self.locations:
-            logging.info(
-                f"Loaded {self.locations_file} with {self.locations} saved locations"
-            )
+            logging.info(f"Loaded {self.locations_file} with {self.locations} saved locations")
 
         self.running: bool = False
 
@@ -120,9 +116,7 @@ class UnitreeGo2LocationProvider:
         """
         mapping = {}
         for _, method in inspect.getmembers(self, predicate=inspect.ismethod):
-            if hasattr(method, "_llm_function") and getattr(
-                method, "_llm_function", False
-            ):
+            if hasattr(method, "_llm_function") and getattr(method, "_llm_function", False):
                 mapping[getattr(method, "_llm_name")] = method
         return mapping
 
@@ -173,9 +167,7 @@ class UnitreeGo2LocationProvider:
             "pose": pose_dict,
         }
 
-    @LLMFunction(
-        "Save the robot's current location with a name and optional description"
-    )
+    @LLMFunction("Save the robot's current location with a name and optional description")
     def record_location(self, location_name: str, description: str = "") -> Dict:
         """
         Record the current location with a given name.
@@ -453,9 +445,7 @@ class UnitreeGo2LocationProvider:
         }
 
     @LLMFunction("Update the description of a saved location")
-    def update_location_description(
-        self, location_name: str, new_description: str
-    ) -> Dict:
+    def update_location_description(self, location_name: str, new_description: str) -> Dict:
         """
         Update the description of a saved location.
         Parameters

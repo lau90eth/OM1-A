@@ -168,9 +168,7 @@ class ModeConfig:
             True if components are loaded, False if only raw config is available
         """
         return (
-            len(self.agent_inputs) > 0
-            or self.cortex_llm is not None
-            or len(self.agent_actions) > 0
+            len(self.agent_inputs) > 0 or self.cortex_llm is not None or len(self.agent_actions) > 0
         )
 
     async def execute_lifecycle_hooks(
@@ -260,14 +258,10 @@ class ModeSystemConfig:
 
         context.update({"system_name": self.name, "is_global_hook": True})
 
-        return await execute_lifecycle_hooks(
-            self.global_lifecycle_hooks, hook_type, context
-        )
+        return await execute_lifecycle_hooks(self.global_lifecycle_hooks, hook_type, context)
 
 
-def load_mode_config(
-    config_name: str, mode_soure_path: Optional[str] = None
-) -> ModeSystemConfig:
+def load_mode_config(config_name: str, mode_soure_path: Optional[str] = None) -> ModeSystemConfig:
     """
     Load a mode-aware configuration from a JSON5 file.
 
@@ -285,9 +279,7 @@ def load_mode_config(
         Parsed mode system configuration
     """
     config_path = (
-        os.path.join(
-            os.path.dirname(__file__), "../../../config", config_name + ".json5"
-        )
+        os.path.join(os.path.dirname(__file__), "../../../config", config_name + ".json5")
         if mode_soure_path is None
         else mode_soure_path
     )
@@ -336,9 +328,7 @@ def load_mode_config(
         system_governance=raw_config.get("system_governance", ""),
         system_prompt_examples=raw_config.get("system_prompt_examples", ""),
         global_cortex_llm=raw_config.get("cortex_llm"),
-        global_lifecycle_hooks=parse_lifecycle_hooks(
-            raw_config.get("global_lifecycle_hooks", [])
-        ),
+        global_lifecycle_hooks=parse_lifecycle_hooks(raw_config.get("global_lifecycle_hooks", [])),
         _raw_global_lifecycle_hooks=raw_config.get("global_lifecycle_hooks", []),
     )
 

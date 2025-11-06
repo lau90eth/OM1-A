@@ -78,9 +78,7 @@ class PresenceSnapshot:
         if k > 0:
             parts.append(f"{k} known ({join_names(clean)})")
         if u > 0:
-            parts.append(
-                f"{u if u == 1 else 'multiple'} unknown face" + ("s" if u != 1 else "")
-            )
+            parts.append(f"{u if u == 1 else 'multiple'} unknown face" + ("s" if u != 1 else ""))
 
         return "In Camera View: " + " and ".join(parts) + "."
 
@@ -173,9 +171,7 @@ class FacePresenceProvider:
         if self._thread and self._thread.is_alive():
             return
         self._stop.clear()
-        self._thread = threading.Thread(
-            target=self._loop, name="face-presence-poll", daemon=True
-        )
+        self._thread = threading.Thread(target=self._loop, name="face-presence-poll", daemon=True)
         self._thread.start()
 
     def stop(self, *, wait: bool = False) -> None:
@@ -240,9 +236,7 @@ class FacePresenceProvider:
 
         if self.prefer_recent:
             rc: Dict[str, int] = data.get("recent_counts", {}) or {}
-            names = [
-                k for k, c in rc.items() if k and k != "unknown" and int(c or 0) > 0
-            ]
+            names = [k for k, c in rc.items() if k and k != "unknown" and int(c or 0) > 0]
             unknown = int(data.get("unknown_recent", 0) or 0)
         else:
             now = data.get("now", []) or []

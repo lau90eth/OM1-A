@@ -34,9 +34,7 @@ def mock_dependencies():
 @pytest.fixture
 def runtime(mock_config, mock_dependencies):
     with (
-        patch(
-            "runtime.single_mode.cortex.Fuser", return_value=mock_dependencies["fuser"]
-        ),
+        patch("runtime.single_mode.cortex.Fuser", return_value=mock_dependencies["fuser"]),
         patch(
             "runtime.single_mode.cortex.ActionOrchestrator",
             return_value=mock_dependencies["action_orchestrator"],
@@ -63,9 +61,7 @@ async def test_tick_successful_execution(runtime):
 
     # Mock successful flow
     finished_promises = ["promise1"]
-    mocks["action_orchestrator"].flush_promises = AsyncMock(
-        return_value=(finished_promises, None)
-    )
+    mocks["action_orchestrator"].flush_promises = AsyncMock(return_value=(finished_promises, None))
     mocks["fuser"].fuse.return_value = "test prompt"
 
     action = Action(type="action1", value="val1")
@@ -109,9 +105,7 @@ async def test_tick_no_prompt(runtime):
 async def test_tick_no_llm_output(runtime):
     cortex_runtime, mocks = runtime
 
-    mocks["action_orchestrator"].flush_promises = AsyncMock(
-        return_value=(["promise"], None)
-    )
+    mocks["action_orchestrator"].flush_promises = AsyncMock(return_value=(["promise"], None))
     mocks["fuser"].fuse.return_value = "test prompt"
     cortex_runtime.config.cortex_llm.ask = AsyncMock(return_value=None)
 
@@ -260,9 +254,7 @@ class TestCortexRuntimeHotReload:
             assert runtime.hot_reload is False
             assert runtime.last_modified == 0.0
 
-    def test_get_file_mtime_existing_file(
-        self, mock_config, mock_dependencies, temp_config_file
-    ):
+    def test_get_file_mtime_existing_file(self, mock_config, mock_dependencies, temp_config_file):
         """Test getting modification time of existing file."""
         with (
             patch(
@@ -349,9 +341,7 @@ class TestCortexRuntimeHotReload:
                 return_value=mock_dependencies["background_orchestrator"],
             ),
         ):
-            runtime = CortexRuntime(
-                mock_config, "test_config", hot_reload=True, check_interval=0.1
-            )
+            runtime = CortexRuntime(mock_config, "test_config", hot_reload=True, check_interval=0.1)
             runtime.config_path = temp_config_file
             runtime.last_modified = 1.0
 
@@ -393,9 +383,7 @@ class TestCortexRuntimeHotReload:
             ),
             patch("os.path.getmtime", return_value=1234567890.0),
         ):
-            runtime = CortexRuntime(
-                mock_config, "test_config", hot_reload=True, check_interval=0.1
-            )
+            runtime = CortexRuntime(mock_config, "test_config", hot_reload=True, check_interval=0.1)
             runtime.last_modified = 1234567890.0
 
             runtime._reload_config = AsyncMock()
@@ -624,9 +612,7 @@ class TestCortexRuntimeHotReload:
                 return_value=mock_dependencies["background_orchestrator"],
             ),
         ):
-            runtime = CortexRuntime(
-                mock_config, "test_config", hot_reload=True, check_interval=1.0
-            )
+            runtime = CortexRuntime(mock_config, "test_config", hot_reload=True, check_interval=1.0)
 
             runtime._start_orchestrators = AsyncMock()
             runtime._cleanup_tasks = AsyncMock()
@@ -651,9 +637,7 @@ class TestCortexRuntimeHotReload:
             runtime._check_config_changes.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_cleanup_tasks_with_config_watcher(
-        self, mock_config, mock_dependencies
-    ):
+    async def test_cleanup_tasks_with_config_watcher(self, mock_config, mock_dependencies):
         """Test cleanup includes config watcher task when hot reload is enabled."""
         with (
             patch(

@@ -52,7 +52,6 @@ class GazeboConnector(ActionConnector[MoveInput]):
         self.robot_name = robot_name
 
     async def connect(self, output_interface: MoveInput) -> None:
-
         new_msg = {"move": ""}
 
         # stub to show how to do this
@@ -93,9 +92,7 @@ class GazeboConnector(ActionConnector[MoveInput]):
             velocity_key (str): Key from VELOCITY_PRESETS dictionary.
         """
         if velocity_key not in VELOCITY_PRESETS:
-            logging.info(
-                f"WARNING: Preset '{velocity_key}' not found. Defaulting to stand still"
-            )
+            logging.info(f"WARNING: Preset '{velocity_key}' not found. Defaulting to stand still")
             velocity_key = "stand still"
 
         velocity = VELOCITY_PRESETS[velocity_key]  # Get the Velocity object

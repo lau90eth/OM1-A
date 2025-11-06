@@ -23,9 +23,7 @@ except StopIteration:
     print("No output device found.")
 
 # Verify the change
-print(
-    f"Current default output device is: {sd.query_devices(sd.default.device)['name']}"
-)
+print(f"Current default output device is: {sd.query_devices(sd.default.device)['name']}")
 
 print("Current volume settings")
 result = osascript.osascript("get volume settings")

@@ -29,9 +29,7 @@ class MockVideoClient:
 @pytest.fixture
 def mock_video_client():
     mock_client = MockVideoClient()
-    with patch(
-        "providers.unitree_camera_vlm_provider.VideoClient", return_value=mock_client
-    ):
+    with patch("providers.unitree_camera_vlm_provider.VideoClient", return_value=mock_client):
         yield mock_client
 
 

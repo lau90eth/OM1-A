@@ -19,9 +19,7 @@ from dataclasses import dataclass
 from om1_utils import ws
 from pynput import keyboard
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 OM_API_KEY = os.environ.get("OM_API_KEY", None)
 if not OM_API_KEY:
@@ -95,7 +93,6 @@ class RemoteMoveController:
         self.update_movement()
 
     def on_release(self, key):
-
         try:
             k = key.char
         except Exception:
@@ -167,9 +164,7 @@ class RemoteMoveController:
         logging.info(" A - Turn Left")
         logging.info(" D - Turn Right")
 
-        publisher_thread = threading.Thread(
-            target=self.continuous_publish_thread, daemon=True
-        )
+        publisher_thread = threading.Thread(target=self.continuous_publish_thread, daemon=True)
         publisher_thread.start()
 
         while True:
@@ -180,9 +175,7 @@ if __name__ == "__main__":
     try:
         move_controller = RemoteMoveController()
 
-        control_thread = threading.Thread(
-            target=move_controller.control_loop, daemon=True
-        )
+        control_thread = threading.Thread(target=move_controller.control_loop, daemon=True)
         control_thread.start()
 
         while True:

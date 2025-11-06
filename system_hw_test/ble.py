@@ -17,9 +17,7 @@ async def main():
 
     for device in devices:
         try:
-            this_device = await BleakScanner.find_device_by_address(
-                device.address, timeout=20
-            )
+            this_device = await BleakScanner.find_device_by_address(device.address, timeout=20)
             async with BleakClient(this_device) as client:
                 print("Services found for device")
                 print(f"\tDevice address:{device.address}")
@@ -34,9 +32,9 @@ async def main():
                     print("\t\tCharacteristics:")
                     for c in service.characteristics:
                         print()
-                        print(f"\t\t\tUUID: {c.uuid}"),
+                        (print(f"\t\t\tUUID: {c.uuid}"),)
                         print(f"\t\t\tDescription: {c.uuid}")
-                        print(f"\t\t\tHandle: {c.uuid}"),
+                        (print(f"\t\t\tHandle: {c.uuid}"),)
                         print(f"\t\t\tProperties: {c.uuid}")
 
                         print("\t\tDescriptors:")

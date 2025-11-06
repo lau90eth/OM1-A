@@ -22,9 +22,7 @@ def mock_config_data():
         "system_prompt_examples": "system prompt examples",
         "agent_inputs": [{"type": "test_input"}],
         "cortex_llm": {"type": "test_llm", "config": {"model": "test-model"}},
-        "simulators": [
-            {"type": "test_simulator", "config": {"api_key": "sim_test_api_key"}}
-        ],
+        "simulators": [{"type": "test_simulator", "config": {"api_key": "sim_test_api_key"}}],
         "agent_actions": [
             {
                 "name": "test_action",
@@ -130,9 +128,7 @@ def test_load_config(mock_config_data, mock_dependencies):
             "runtime.single_mode.config.load_simulator",
             return_value=mock_dependencies["simulator"],
         ),
-        patch(
-            "runtime.single_mode.config.load_llm", return_value=mock_dependencies["llm"]
-        ),
+        patch("runtime.single_mode.config.load_llm", return_value=mock_dependencies["llm"]),
     ):
         config = load_config("test_config")
 
@@ -141,9 +137,7 @@ def test_load_config(mock_config_data, mock_dependencies):
         assert config.name == mock_config_data["name"]
         assert config.system_prompt_base == mock_config_data["system_prompt_base"]
         assert config.system_governance == mock_config_data["system_governance"]
-        assert (
-            config.system_prompt_examples == mock_config_data["system_prompt_examples"]
-        )
+        assert config.system_prompt_examples == mock_config_data["system_prompt_examples"]
         assert config.api_key == mock_config_data["api_key"]
         assert len(config.agent_inputs) == 1
         assert isinstance(config.agent_inputs[0], mock_dependencies["input"])
@@ -158,9 +152,7 @@ def test_load_config(mock_config_data, mock_dependencies):
 
 def test_load_empty_config(mock_empty_config_data, mock_dependencies):
     with (
-        patch(
-            "builtins.open", mock_open(read_data=json5.dumps(mock_empty_config_data))
-        ),
+        patch("builtins.open", mock_open(read_data=json5.dumps(mock_empty_config_data))),
         patch(
             "runtime.single_mode.config.load_input",
             return_value=mock_dependencies["input"],
@@ -173,9 +165,7 @@ def test_load_empty_config(mock_empty_config_data, mock_dependencies):
             "runtime.single_mode.config.load_simulator",
             return_value=mock_dependencies["simulator"],
         ),
-        patch(
-            "runtime.single_mode.config.load_llm", return_value=mock_dependencies["llm"]
-        ),
+        patch("runtime.single_mode.config.load_llm", return_value=mock_dependencies["llm"]),
     ):
         config = load_config("empty_config")
 
@@ -210,9 +200,7 @@ def test_load_multiple_components(mock_multiple_components_config, mock_dependen
             "runtime.single_mode.config.load_simulator",
             return_value=mock_dependencies["simulator"],
         ),
-        patch(
-            "runtime.single_mode.config.load_llm", return_value=mock_dependencies["llm"]
-        ),
+        patch("runtime.single_mode.config.load_llm", return_value=mock_dependencies["llm"]),
     ):
         config = load_config("multiple_components")
 
@@ -229,7 +217,9 @@ def test_load_config_missing_required_fields():
         "name": "invalid_config",
     }
 
-    with (patch("builtins.open", mock_open(read_data=json5.dumps(invalid_config))),):
+    with (
+        patch("builtins.open", mock_open(read_data=json5.dumps(invalid_config))),
+    ):
         with pytest.raises(KeyError):
             load_config("invalid_config")
 
@@ -247,7 +237,9 @@ def test_load_config_invalid_hertz():
         "agent_actions": [],
     }
 
-    with (patch("builtins.open", mock_open(read_data=json5.dumps(invalid_config))),):
+    with (
+        patch("builtins.open", mock_open(read_data=json5.dumps(invalid_config))),
+    ):
         with pytest.raises(ValueError):
             load_config("invalid_config")
 
@@ -259,7 +251,6 @@ def test_load_config_missing_file():
 
 def test_load_config_invalid_json():
     with patch("builtins.open", mock_open(read_data="invalid json5")):
-
         # try:
         #     load_config("invalid_config")
         # except Exception as error:

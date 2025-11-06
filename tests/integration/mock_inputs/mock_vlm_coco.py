@@ -48,9 +48,7 @@ class MockVLM_COCO(VLM_COCO_Local):
             weights_backbone="MobileNet_V3_Large_Weights.IMAGENET1K_V1",
         ).to(self.device)
         self.class_labels = (
-            detection_model.FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT.meta[
-                "categories"
-            ]
+            detection_model.FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT.meta["categories"]
         )
         self.model.eval()
 

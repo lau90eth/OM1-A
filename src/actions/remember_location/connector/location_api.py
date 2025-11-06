@@ -25,9 +25,7 @@ class RememberLocationConnector(ActionConnector[RememberLocationInput]):
         """
         super().__init__(config)
 
-        self.base_url = getattr(
-            config, "base_url", "http://localhost:5000/maps/locations/add/slam"
-        )
+        self.base_url = getattr(config, "base_url", "http://localhost:5000/maps/locations/add/slam")
         self.timeout = getattr(config, "timeout", 5)
         self.map_name = getattr(config, "map_name", "map")
 
@@ -68,9 +66,7 @@ class RememberLocationConnector(ActionConnector[RememberLocationInput]):
                             f"Location {input_protocol.action} remembered. Woof! Woof!"
                         )
                     else:
-                        logging.error(
-                            f"RememberLocation API returned {resp.status}: {text}"
-                        )
+                        logging.error(f"RememberLocation API returned {resp.status}: {text}")
         except asyncio.TimeoutError:
             logging.error("RememberLocation API request timed out")
         except Exception as e:

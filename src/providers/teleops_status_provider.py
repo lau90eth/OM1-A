@@ -3,19 +3,15 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
-
+from typing import Optional, Dict, Any
 import requests
-
+import json5  # Aggiunto per parsing config robusto
+import subprocess
 from .singleton import singleton
 
 
 @dataclass
 class BatteryStatus:
-    """
-    Data class to represent the battery status of a teleops system.
-    """
-
     battery_level: float
     temperature: float
     voltage: float
@@ -23,14 +19,6 @@ class BatteryStatus:
     charging_status: bool = False
 
     def to_dict(self) -> dict:
-        """
-        Convert the BatteryStatus object to a dictionary.
-
-        Returns
-        -------
-        dict
-            Dictionary representation of the BatteryStatus object.
-        """
         return {
             "battery_level": self.battery_level,
             "charging_status": self.charging_status,
@@ -41,14 +29,6 @@ class BatteryStatus:
 
     @classmethod
     def from_dict(cls, data: dict) -> "BatteryStatus":
-        """
-        Populate the BatteryStatus object from a dictionary.
-
-        Parameters
-        ----------
-        data : dict
-            Dictionary containing battery status information.
-        """
         return cls(
             battery_level=data.get("battery_level", 0.0),
             charging_status=data.get("charging_status", False),
@@ -60,24 +40,12 @@ class BatteryStatus:
 
 @dataclass
 class CommandStatus:
-    """
-    Data class to represent the command status of a teleops system.
-    """
-
     vx: float
     vy: float
     vyaw: float
     timestamp: str
 
     def to_dict(self) -> dict:
-        """
-        Convert the CommandStatus object to a dictionary.
-
-        Returns
-        -------
-        dict
-            Dictionary representation of the CommandStatus object.
-        """
         return {
             "vx": self.vx,
             "vy": self.vy,
@@ -87,14 +55,6 @@ class CommandStatus:
 
     @classmethod
     def from_dict(cls, data: dict) -> "CommandStatus":
-        """
-        Populate the CommandStatus object from a dictionary.
-
-        Parameters
-        ----------
-        data : dict
-            Dictionary containing command status information.
-        """
         return cls(
             vx=data.get("vx", 0.0),
             vy=data.get("vy", 0.0),
@@ -104,10 +64,6 @@ class CommandStatus:
 
 
 class ActionType(Enum):
-    """
-    Enum for action type.
-    """
-
     AI = "AI"
     TELEOPS = "TELEOPS"
     CONTROLLER = "CONTROLLER"
@@ -115,22 +71,10 @@ class ActionType(Enum):
 
 @dataclass
 class ActionStatus:
-    """
-    Data class to represent the action status of a robot action system.
-    """
-
     action: ActionType
     timestamp: float
 
     def to_dict(self) -> dict:
-        """
-        Convert the Action object to a dictionary.
-
-        Returns
-        -------
-        dict
-            Dictionary representation of the Action object.
-        """
         return {
             "action": self.action.value,
             "timestamp": self.timestamp,
@@ -138,14 +82,6 @@ class ActionStatus:
 
     @classmethod
     def from_dict(cls, data: dict) -> "ActionStatus":
-        """
-        Populate the ActionStatus object from a dictionary.
-
-        Parameters
-        ----------
-        data : dict
-            Dictionary containing action status information.
-        """
         return cls(
             action=ActionType(data.get("action", ActionType.AI.value)),
             timestamp=data.get("timestamp", time.time()),
@@ -154,10 +90,6 @@ class ActionStatus:
 
 @dataclass
 class TeleopsStatus:
-    """
-    Data class to represent the status of the teleops system.
-    """
-
     update_time: str
     battery_status: BatteryStatus
     action_status: ActionStatus = field(
@@ -167,14 +99,6 @@ class TeleopsStatus:
     video_connected: bool = False
 
     def to_dict(self) -> dict:
-        """
-        Convert the TeleopsStatus object to a dictionary.
-
-        Returns
-        -------
-        dict
-            Dictionary representation of the TeleopsStatus object.
-        """
         return {
             "machine_name": self.machine_name,
             "update_time": self.update_time,
@@ -185,14 +109,6 @@ class TeleopsStatus:
 
     @classmethod
     def from_dict(cls, data: dict) -> "TeleopsStatus":
-        """
-        Populate the TeleopsStatus object from a dictionary.
-
-        Parameters
-        ----------
-        data : dict
-            Dictionary containing teleops status information.
-        """
         return cls(
             update_time=data.get("update_time", time.time()),
             battery_status=BatteryStatus.from_dict(data.get("battery_status", {})),
@@ -206,88 +122,102 @@ class TeleopsStatus:
 class TeleopsStatusProvider:
     """
     Teleops Status provider reports the status of the machine.
+    Now includes sensor watchdog for Pi Network Season 1 runs.
     """
 
     def __init__(
         self,
         api_key: Optional[str] = None,
         base_url: str = "https://api.openmind.org/api/core/teleops/status",
+        config_path: Optional[str] = "config/teleops.json5",  # Nuovo: config locale
     ):
-        """
-        Initialize the TeleopsStatusProvider.
-
-        Parameters
-        ----------
-        api_key : str
-            API key for authentication. Default is None.
-        base_url : str
-            Base URL for the teleops status API. Default is
-            "https://api.openmind.org/api/core/teleops/status".
-        """
         self.api_key = api_key
         self.base_url = base_url
+        self.config_path = config_path
         self.executor = ThreadPoolExecutor(max_workers=1)
+        self.sensor_config: Dict[str, Any] = {}
+        self._load_sensor_config()
+
+    def _load_sensor_config(self):
+        """Carica config sensori con watchdog automatico (Pi Network compatible)"""
+        if not self.config_path:
+            return
+
+        try:
+            with open(self.config_path, "r") as f:
+                config = json5.load(f)
+
+            self.sensor_config = config.get("sensors", [])
+
+            # Aggiungi watchdog di default se mancante
+            for sensor in self.sensor_config:
+                if "watchdog" not in sensor:
+                    sensor["watchdog"] = {
+                        "timeout": 30,
+                        "restart_cmd": "systemctl restart sensor_service",
+                        "last_heartbeat": time.time(),
+                    }
+            logging.info(f"[Teleops] Loaded {len(self.sensor_config)} sensors with watchdog")
+        except Exception as e:
+            logging.error(f"[Teleops] Failed to load sensor config: {e}")
+            self.sensor_config = []
+
+    def _check_sensor_heartbeat(self):
+        """Controlla heartbeat sensori e riavvia se timeout"""
+        now = time.time()
+        for sensor in self.sensor_config:
+            wd = sensor.get("watchdog", {})
+            last = wd.get("last_heartbeat", now)
+            timeout = wd.get("timeout", 30)
+
+            if now - last > timeout:
+                name = sensor.get("name", "unknown")
+                cmd = wd.get("restart_cmd", "")
+                logging.warning(f"[WATCHDOG] Timeout on sensor '{name}' → restarting...")
+                try:
+                    subprocess.run(cmd, shell=True, check=True, timeout=10)
+                    wd["last_heartbeat"] = now
+                    logging.info(f"[WATCHDOG] Sensor '{name}' restarted")
+                except Exception as e:
+                    logging.error(f"[WATCHDOG] Failed to restart '{name}': {e}")
 
     def get_status(self) -> dict:
-        """
-        Get the status of the machine.
-        """
         if self.api_key is None or self.api_key == "":
             logging.error("API key is missing. Cannot get status.")
             return {}
 
         api_key_id = self.api_key[9:25] if len(self.api_key) > 25 else self.api_key
-        request = requests.get(
-            f"{self.base_url}/{api_key_id}",
-            headers={"Authorization": f"Bearer {self.api_key}"},
-        )
-        if request.status_code == 200:
-            return request.json()
-        else:
-            logging.error(
-                f"Failed to get status: {request.status_code} - {request.text}"
+        try:
+            request = requests.get(
+                f"{self.base_url}/{api_key_id}",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                timeout=5,
             )
-            return {}
+            if request.status_code == 200:
+                return request.json()
+        except Exception as e:
+            logging.error(f"Failed to get status: {e}")
+        return {}
 
     def _share_status_worker(self, status: TeleopsStatus):
-        """
-        Worker function to share the status of the machine.
-        This function runs in a separate thread to avoid blocking the main thread.
-
-        Parameters
-        ----------
-        status : TeleopsStatus
-            The status of the machine to be shared.
-        """
         if self.api_key is None or self.api_key == "":
             logging.error("API key is missing. Cannot share status.")
             return
-
         try:
             request = requests.post(
                 self.base_url,
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 json=status.to_dict(),
+                timeout=5,
             )
-
             if request.status_code == 200:
-                logging.debug(f"Status shared successfully: {request.json()}")
+                logging.debug(f"Status shared: {request.json()}")
             else:
-                logging.error(
-                    f"Failed to share status: {request.status_code} - {request.text}"
-                )
+                logging.error(f"Failed to share: {request.status_code} - {request.text}")
         except Exception as e:
-            logging.error(f"Error sharing status: {str(e)}")
+            logging.error(f"Error sharing status: {e}")
 
     def share_status(self, status: TeleopsStatus):
-        """
-        Share the status of the machine.
-        This function submits the status sharing task to a thread pool executor
-        to run in a separate thread.
-
-        Parameters
-        ----------
-        status : TeleopsStatus
-            The status of the machine to be shared.
-        """
+        # Esegui watchdog prima di condividere
+        self._check_sensor_heartbeat()
         self.executor.submit(self._share_status_worker, status)

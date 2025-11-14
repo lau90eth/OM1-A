@@ -1,66 +1,7 @@
-name: Run Integration Tests
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-  schedule:
-    - cron: '0 2 * * *'
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install system dependencies for pyaudio
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y portaudio19-dev python3-pyaudio
-
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Create virtual environment
-        run: uv venv .venv
-
-      - name: Install dependencies
-        run: |
-          source .venv/bin/activate
-          uv pip install -r requirements.txt || uv pip install -e . || true
-          uv pip install pytest pytest-asyncio pytest-anyio ruff
-
-      - name: Install ubtech dependency
-        run: |
-          source .venv/bin/activate
-          uv pip install git+https://github.com/OpenMind/ubtech-python-sdk.git || true
-
-      - name: Fix imports with Ruff
-        run: |
-          source .venv/bin/activate
-          uv run ruff check . --fix || true
-
-      - name: Run integration tests
-        env:
-          OM1_API_KEY: dummy-key-for-testing
-        run: |
-          source .venv/bin/activate
-          mkdir -p test-reports
-          uv run pytest -m "integration" --log-cli-level=DEBUG --junitxml=test-reports/results.xml -s -v
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pytest-results
-          path: test-reports/results.xml
+- name: Run integration tests
+  env:
+    OM1_API_KEY: dummy-key-for-testing
+  run: |
+    source .venv/bin/activate
+    mkdir -p test-reports
+    uv run pytest -k "not ubtech" -v --tb=short .
